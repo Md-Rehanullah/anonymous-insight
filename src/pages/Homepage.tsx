@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import CreatePostForm from "@/components/CreatePostForm";
 import PostCard from "@/components/PostCard";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Answer {
   id: string;
@@ -129,49 +132,164 @@ const generateMockPosts = (): Post[] => [
 const Homepage = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // In production, this would fetch from MongoDB API
-    setPosts(generateMockPosts());
+    fetchPosts();
   }, []);
 
-  const handleCreatePost = (newPostData: {
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          answers (
+            *
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching posts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load posts. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Transform data to match the expected Post interface
+      const transformedPosts: Post[] = data.map((post: any) => ({
+        id: post.id,
+        title: post.title,
+        description: post.description,
+        category: post.category,
+        likes: post.likes,
+        dislikes: post.dislikes,
+        imageUrl: post.image_url,
+        timestamp: new Date(post.created_at),
+        answers: post.answers.map((answer: any) => ({
+          id: answer.id,
+          content: answer.content,
+          likes: answer.likes,
+          dislikes: answer.dislikes,
+          replies: [], // For now, we'll keep replies empty
+          timestamp: new Date(answer.created_at)
+        }))
+      }));
+
+      setPosts(transformedPosts);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load posts. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreatePost = async (newPostData: {
     title: string;
     description: string;
     category: string;
     imageUrl?: string;
   }) => {
-    const newPost: Post = {
-      id: Date.now().toString(),
-      ...newPostData,
-      likes: 0,
-      dislikes: 0,
-      answers: [],
-      timestamp: new Date(),
-    };
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
 
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-    
-    // In production, this would send to MongoDB API
-    console.log("Creating post:", newPost);
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          title: newPostData.title,
+          description: newPostData.description,
+          category: newPostData.category,
+          image_url: newPostData.imageUrl
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating post:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create post. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Add the new post to the local state
+      const newPost: Post = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        likes: data.likes,
+        dislikes: data.dislikes,
+        imageUrl: data.image_url,
+        timestamp: new Date(data.created_at),
+        answers: []
+      };
+
+      setPosts(prevPosts => [newPost, ...prevPosts]);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create post. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleLike = (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      )
-    );
-    // In production, this would update MongoDB
+  const handleLike = async (postId: string) => {
+    try {
+      const { error } = await supabase.rpc('increment_post_likes', {
+        post_id: postId
+      });
+
+      if (error) {
+        console.error('Error liking post:', error);
+        return;
+      }
+
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === postId ? { ...post, likes: post.likes + 1 } : post
+        )
+      );
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
   };
 
-  const handleDislike = (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId ? { ...post, dislikes: post.dislikes + 1 } : post
-      )
-    );
-    // In production, this would update MongoDB
+  const handleDislike = async (postId: string) => {
+    try {
+      const { error } = await supabase.rpc('increment_post_dislikes', {
+        post_id: postId
+      });
+
+      if (error) {
+        console.error('Error disliking post:', error);
+        return;
+      }
+
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === postId ? { ...post, dislikes: post.dislikes + 1 } : post
+        )
+      );
+    } catch (error) {
+      console.error('Error disliking post:', error);
+    }
   };
 
   const handleReport = (postId: string, reason: string) => {
@@ -182,24 +300,57 @@ const Homepage = () => {
     // For now, we'll just show a toast
   };
 
-  const handleAddAnswer = (postId: string, answerContent: string) => {
-    const newAnswer: Answer = {
-      id: Date.now().toString(),
-      content: answerContent,
-      likes: 0,
-      dislikes: 0,
-      replies: [],
-      timestamp: new Date(),
-    };
+  const handleAddAnswer = async (postId: string, answerContent: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
 
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId
-          ? { ...post, answers: [...post.answers, newAnswer] }
-          : post
-      )
-    );
-    // In production, this would update MongoDB
+    try {
+      const { data, error } = await supabase
+        .from('answers')
+        .insert({
+          post_id: postId,
+          user_id: user.id,
+          content: answerContent
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding answer:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add answer. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newAnswer: Answer = {
+        id: data.id,
+        content: data.content,
+        likes: data.likes,
+        dislikes: data.dislikes,
+        replies: [],
+        timestamp: new Date(data.created_at),
+      };
+
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === postId
+            ? { ...post, answers: [...post.answers, newAnswer] }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error('Error adding answer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add answer. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
