@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Moon, Sun, Github, Instagram, Facebook, Twitter, ArrowUp } from "lucide-react";
+import { Moon, Sun, Github, Instagram, Facebook, Twitter, ArrowUp, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -76,16 +78,42 @@ const Layout = ({ children }: LayoutProps) => {
               </Link>
             </nav>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="h-9 w-9 p-0"
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            <div className="flex items-center space-x-2">
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground hidden sm:inline">
+                    Welcome back!
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={signOut}
+                    className="flex items-center space-x-1"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="flex items-center space-x-1">
+                    <LogIn className="h-4 w-4" />
+                    <span className="hidden sm:inline">Sign In</span>
+                  </Button>
+                </Link>
+              )}
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                className="h-9 w-9 p-0"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
