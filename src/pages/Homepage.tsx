@@ -152,7 +152,7 @@ const Homepage = () => {
 
   const handleLike = async (postId: string) => {
     try {
-      const { error } = await supabase.rpc('increment_post_likes', {
+      const { error } = await supabase.rpc('increment_post_likes' as any, {
         post_id: postId
       });
 
@@ -173,7 +173,7 @@ const Homepage = () => {
 
   const handleDislike = async (postId: string) => {
     try {
-      const { error } = await supabase.rpc('increment_post_dislikes', {
+      const { error } = await supabase.rpc('increment_post_dislikes' as any, {
         post_id: postId
       });
 
