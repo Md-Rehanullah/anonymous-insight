@@ -121,11 +121,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_interactions: {
+        Row: {
+          created_at: string
+          id: string
+          interaction_type: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interaction_type: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_user_interaction: {
+        Args: { post_id: string; user_id: string }
+        Returns: string
+      }
       increment_answer_dislikes: {
         Args: { answer_id: string }
         Returns: undefined
@@ -135,11 +166,11 @@ export type Database = {
         Returns: undefined
       }
       increment_post_dislikes: {
-        Args: { post_id: string }
+        Args: { post_id: string } | { post_id: string; user_id: string }
         Returns: undefined
       }
       increment_post_likes: {
-        Args: { post_id: string }
+        Args: { post_id: string } | { post_id: string; user_id: string }
         Returns: undefined
       }
     }

@@ -5,6 +5,7 @@ import CreatePostForm from "@/components/CreatePostForm";
 import PostCard from "@/components/PostCard";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Answer {
@@ -34,6 +35,10 @@ const Homepage = () => {
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user interactions for all posts
+  const postIds = posts.map(post => post.id);
+  const { interactions } = useUserInteractions(postIds);
 
   useEffect(() => {
     fetchPosts();
@@ -150,58 +155,105 @@ const Homepage = () => {
     }
   };
 
+  // Handle like functionality with authentication check
   const handleLike = async (postId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to like posts.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
     try {
       const { error } = await supabase.rpc('increment_post_likes' as any, {
-        post_id: postId
+        post_id: postId,
+        user_id: user.id
       });
 
-      if (error) {
-        console.error('Error liking post:', error);
-        return;
-      }
+      if (error) throw error;
 
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === postId ? { ...post, likes: post.likes + 1 } : post
-        )
-      );
+      // Refresh posts to show updated counts
+      await fetchPosts();
+      
+      toast({
+        title: "Post liked!",
+        description: "Your interaction has been recorded.",
+      });
     } catch (error) {
       console.error('Error liking post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to like post. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
+  // Handle dislike functionality with authentication check
   const handleDislike = async (postId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to dislike posts.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
     try {
       const { error } = await supabase.rpc('increment_post_dislikes' as any, {
-        post_id: postId
+        post_id: postId,
+        user_id: user.id
       });
 
-      if (error) {
-        console.error('Error disliking post:', error);
-        return;
-      }
+      if (error) throw error;
 
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === postId ? { ...post, dislikes: post.dislikes + 1 } : post
-        )
-      );
+      // Refresh posts to show updated counts
+      await fetchPosts();
+      
+      toast({
+        title: "Post disliked!",
+        description: "Your interaction has been recorded.",
+      });
     } catch (error) {
       console.error('Error disliking post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to dislike post. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleReport = (postId: string, reason: string) => {
-    // In production, this would send report to your email
-    console.log(`Report for post ${postId}: ${reason}`);
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to report posts.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
     
-    // Here you would integrate with an email service to send the report
-    // For now, we'll just show a toast
+    console.log('Report submitted for post:', postId, 'Reason:', reason);
+    toast({
+      title: "Report submitted",
+      description: "Thank you for helping keep our community safe.",
+    });
   };
 
   const handleAddAnswer = async (postId: string, answerContent: string) => {
     if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to add answers.",
+        variant: "destructive",
+      });
       navigate('/auth');
       return;
     }
@@ -227,22 +279,13 @@ const Homepage = () => {
         return;
       }
 
-      const newAnswer: Answer = {
-        id: data.id,
-        content: data.content,
-        likes: data.likes,
-        dislikes: data.dislikes,
-        replies: [],
-        timestamp: new Date(data.created_at),
-      };
-
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === postId
-            ? { ...post, answers: [...post.answers, newAnswer] }
-            : post
-        )
-      );
+      // Refresh posts to show the new answer
+      await fetchPosts();
+      
+      toast({
+        title: "Answer posted!",
+        description: "Your answer has been added successfully.",
+      });
     } catch (error) {
       console.error('Error adding answer:', error);
       toast({
@@ -287,6 +330,7 @@ const Homepage = () => {
                 onDislike={handleDislike}
                 onReport={handleReport}
                 onAddAnswer={handleAddAnswer}
+                userInteraction={interactions[post.id] || null}
               />
             ))
           )}

@@ -33,9 +33,10 @@ interface PostCardProps {
   onDislike: (postId: string) => void;
   onReport: (postId: string, reason: string) => void;
   onAddAnswer: (postId: string, answer: string) => void;
+  userInteraction?: 'like' | 'dislike' | null;
 }
 
-const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer }: PostCardProps) => {
+const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, userInteraction }: PostCardProps) => {
   const [showAllAnswers, setShowAllAnswers] = useState(false);
   const [newAnswer, setNewAnswer] = useState("");
   const [showAnswerForm, setShowAnswerForm] = useState(false);
@@ -118,7 +119,9 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer }: PostCardPr
             variant="ghost"
             size="sm"
             onClick={() => onLike(post.id)}
-            className="flex items-center space-x-1 text-muted-foreground hover:text-primary"
+            className={`flex items-center space-x-1 text-muted-foreground hover:text-primary ${
+              userInteraction === 'like' ? 'text-primary bg-primary/10' : ''
+            }`}
           >
             <ThumbsUp className="h-4 w-4" />
             <span>{post.likes}</span>
@@ -128,7 +131,9 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer }: PostCardPr
             variant="ghost"
             size="sm"
             onClick={() => onDislike(post.id)}
-            className="flex items-center space-x-1 text-muted-foreground hover:text-destructive"
+            className={`flex items-center space-x-1 text-muted-foreground hover:text-destructive ${
+              userInteraction === 'dislike' ? 'text-destructive bg-destructive/10' : ''
+            }`}
           >
             <ThumbsDown className="h-4 w-4" />
             <span>{post.dislikes}</span>
