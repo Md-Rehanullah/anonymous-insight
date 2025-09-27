@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Moon, Sun, Github, Instagram, Facebook, Twitter, ArrowUp, LogIn, LogOut, User } from "lucide-react";
+import { Moon, Sun, Github, Instagram, Facebook, Twitter, ArrowUp, LogIn, LogOut, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,8 @@ const Layout = ({ children }: LayoutProps) => {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,6 +81,18 @@ const Layout = ({ children }: LayoutProps) => {
               </Link>
             </nav>
 
+            {/* Mobile Menu Button */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden h-9 w-9 p-0"
+              >
+                {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </Button>
+            )}
+
             <div className="flex items-center space-x-2">
               {user ? (
                 <div className="flex items-center space-x-2">
@@ -116,6 +131,54 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && isMobile && (
+          <div className="md:hidden border-t bg-background/95 backdrop-blur-sm">
+            <nav className="container mx-auto px-4 py-4 space-y-3">
+              <Link 
+                to="/" 
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "block text-sm font-medium py-2 transition-colors hover:text-primary",
+                  location.pathname === "/" ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/about" 
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "block text-sm font-medium py-2 transition-colors hover:text-primary",
+                  location.pathname === "/about" ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                About
+              </Link>
+              <Link 
+                to="/contact" 
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "block text-sm font-medium py-2 transition-colors hover:text-primary",
+                  location.pathname === "/contact" ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                Contact
+              </Link>
+              <Link 
+                to="/collaborate" 
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "block text-sm font-medium py-2 transition-colors hover:text-primary",
+                  location.pathname === "/collaborate" ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                Collaborate
+              </Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}

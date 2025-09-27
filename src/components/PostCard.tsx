@@ -113,7 +113,7 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer }: PostCardPr
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-4 pt-2">
+        <div className="flex flex-wrap items-center gap-2 pt-2">
           <Button
             variant="ghost"
             size="sm"
@@ -167,18 +167,18 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer }: PostCardPr
 
         {/* Report Form */}
         {showReportForm && (
-          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-3 p-4 bg-muted/50 rounded-lg overflow-hidden">
             <Textarea
               placeholder="Please explain why you're reporting this post..."
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="resize-none"
+              className="resize-none w-full min-h-20"
             />
-            <div className="flex space-x-2">
-              <Button size="sm" onClick={handleReport}>
+            <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 sm:space-y-0">
+              <Button size="sm" onClick={handleReport} className="w-full sm:w-auto">
                 Submit Report
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowReportForm(false)}>
+              <Button size="sm" variant="outline" onClick={() => setShowReportForm(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>
@@ -187,18 +187,18 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer }: PostCardPr
 
         {/* Answer Form */}
         {showAnswerForm && (
-          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-3 p-4 bg-muted/50 rounded-lg overflow-hidden">
             <Textarea
               placeholder="Write your answer..."
               value={newAnswer}
               onChange={(e) => setNewAnswer(e.target.value)}
-              className="resize-none"
+              className="resize-none w-full min-h-20"
             />
-            <div className="flex space-x-2">
-              <Button size="sm" onClick={handleAddAnswer}>
+            <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 sm:space-y-0">
+              <Button size="sm" onClick={handleAddAnswer} className="w-full sm:w-auto">
                 Post Answer
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowAnswerForm(false)}>
+              <Button size="sm" variant="outline" onClick={() => setShowAnswerForm(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>
