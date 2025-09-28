@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -12,8 +12,11 @@ export const useUserInteractions = (postIds: string[]) => {
   const [interactions, setInteractions] = useState<Record<string, 'like' | 'dislike' | null>>({});
   const [loading, setLoading] = useState(false);
 
+  // Memoize postIds to prevent infinite re-renders
+  const memoizedPostIds = useMemo(() => postIds, [postIds.join(',')]);
+
   useEffect(() => {
-    if (!user || postIds.length === 0) {
+    if (!user || memoizedPostIds.length === 0) {
       setInteractions({});
       return;
     }
@@ -25,12 +28,12 @@ export const useUserInteractions = (postIds: string[]) => {
           .from('user_interactions')
           .select('post_id, interaction_type')
           .eq('user_id', user.id)
-          .in('post_id', postIds);
+          .in('post_id', memoizedPostIds);
 
         if (error) throw error;
 
         const interactionMap: Record<string, 'like' | 'dislike' | null> = {};
-        postIds.forEach(postId => {
+        memoizedPostIds.forEach(postId => {
           interactionMap[postId] = null;
         });
 
@@ -47,7 +50,7 @@ export const useUserInteractions = (postIds: string[]) => {
     };
 
     fetchInteractions();
-  }, [user, postIds]);
+  }, [user, memoizedPostIds]);
 
   return { interactions, loading };
 };

@@ -34,10 +34,12 @@ interface PostCardProps {
   onDislike: (postId: string) => void;
   onReport: (postId: string, reason: string) => void;
   onAddAnswer: (postId: string, answer: string) => void;
+  onAnswerLike?: (answerId: string) => void;
+  onAnswerDislike?: (answerId: string) => void;
   userInteraction?: 'like' | 'dislike' | null;
 }
 
-const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, userInteraction }: PostCardProps) => {
+const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, onAnswerLike, onAnswerDislike, userInteraction }: PostCardProps) => {
   const [showAllAnswers, setShowAllAnswers] = useState(false);
   const [newAnswer, setNewAnswer] = useState("");
   const [showAnswerForm, setShowAnswerForm] = useState(false);
@@ -228,14 +230,20 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, userInteract
                 <p className="text-sm mb-2">{answer.content}</p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center space-x-3">
-                    <span className="flex items-center space-x-1">
+                    <button
+                      className="flex items-center space-x-1 hover:text-primary transition-colors cursor-pointer"
+                      onClick={() => onAnswerLike?.(answer.id)}
+                    >
                       <ThumbsUp className="h-3 w-3" />
                       <span>{answer.likes}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
+                    </button>
+                    <button
+                      className="flex items-center space-x-1 hover:text-destructive transition-colors cursor-pointer"
+                      onClick={() => onAnswerDislike?.(answer.id)}
+                    >
                       <ThumbsDown className="h-3 w-3" />
                       <span>{answer.dislikes}</span>
-                    </span>
+                    </button>
                   </div>
                   <span>{formatDistanceToNow(new Date(answer.created_at), { addSuffix: true })}</span>
                 </div>

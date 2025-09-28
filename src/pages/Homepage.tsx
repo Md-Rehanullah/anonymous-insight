@@ -247,6 +247,76 @@ const Homepage = () => {
     });
   };
 
+  const handleAnswerLike = async (answerId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to like answers.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('increment_answer_likes', {
+        answer_id: answerId
+      });
+
+      if (error) throw error;
+
+      // Refresh posts to show updated counts
+      await fetchPosts();
+      
+      toast({
+        title: "Answer liked!",
+        description: "Your interaction has been recorded.",
+      });
+    } catch (error) {
+      console.error('Error liking answer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to like answer. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAnswerDislike = async (answerId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to dislike answers.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('increment_answer_dislikes', {
+        answer_id: answerId
+      });
+
+      if (error) throw error;
+
+      // Refresh posts to show updated counts
+      await fetchPosts();
+      
+      toast({
+        title: "Answer disliked!",
+        description: "Your interaction has been recorded.",
+      });
+    } catch (error) {
+      console.error('Error disliking answer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to dislike answer. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAddAnswer = async (postId: string, answerContent: string) => {
     if (!user) {
       toast({
@@ -330,6 +400,8 @@ const Homepage = () => {
                 onDislike={handleDislike}
                 onReport={handleReport}
                 onAddAnswer={handleAddAnswer}
+                onAnswerLike={handleAnswerLike}
+                onAnswerDislike={handleAnswerDislike}
                 userInteraction={interactions[post.id] || null}
               />
             ))
