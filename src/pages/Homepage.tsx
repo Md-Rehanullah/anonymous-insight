@@ -14,7 +14,7 @@ interface Answer {
   likes: number;
   dislikes: number;
   replies: Answer[];
-  timestamp: Date;
+  created_at: string;
 }
 
 interface Post {
@@ -25,7 +25,7 @@ interface Post {
   likes: number;
   dislikes: number;
   answers: Answer[];
-  timestamp: Date;
+  created_at: string;
   imageUrl?: string;
 }
 
@@ -75,14 +75,14 @@ const Homepage = () => {
         likes: post.likes,
         dislikes: post.dislikes,
         imageUrl: post.image_url,
-        timestamp: new Date(post.created_at),
+        created_at: post.created_at,
         answers: post.answers.map((answer: any) => ({
           id: answer.id,
           content: answer.content,
           likes: answer.likes,
           dislikes: answer.dislikes,
           replies: [], // For now, we'll keep replies empty
-          timestamp: new Date(answer.created_at)
+          created_at: answer.created_at
         }))
       }));
 
@@ -140,7 +140,7 @@ const Homepage = () => {
         likes: data.likes,
         dislikes: data.dislikes,
         imageUrl: data.image_url,
-        timestamp: new Date(data.created_at),
+        created_at: data.created_at,
         answers: []
       };
 

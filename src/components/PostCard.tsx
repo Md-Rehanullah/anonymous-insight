@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbsUp, ThumbsDown, Share2, Flag, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
 
 interface Answer {
   id: string;
@@ -12,7 +13,7 @@ interface Answer {
   likes: number;
   dislikes: number;
   replies: Answer[];
-  timestamp: Date;
+  created_at: string;
 }
 
 interface Post {
@@ -23,7 +24,7 @@ interface Post {
   likes: number;
   dislikes: number;
   answers: Answer[];
-  timestamp: Date;
+  created_at: string;
   imageUrl?: string;
 }
 
@@ -94,7 +95,12 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, userInteract
         {/* Post Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-lg font-semibold">{post.title}</h3>
+              <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              </span>
+            </div>
             <p className="text-muted-foreground mb-3">{post.description}</p>
             <Badge variant="secondary" className="text-xs">
               {post.category}
@@ -220,16 +226,18 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, userInteract
             {displayedAnswers.map((answer) => (
               <div key={answer.id} className="p-3 bg-muted/30 rounded-lg">
                 <p className="text-sm mb-2">{answer.content}</p>
-                <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-                  <span className="flex items-center space-x-1">
-                    <ThumbsUp className="h-3 w-3" />
-                    <span>{answer.likes}</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <ThumbsDown className="h-3 w-3" />
-                    <span>{answer.dislikes}</span>
-                  </span>
-                  <span>{answer.timestamp.toLocaleDateString()}</span>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center space-x-3">
+                    <span className="flex items-center space-x-1">
+                      <ThumbsUp className="h-3 w-3" />
+                      <span>{answer.likes}</span>
+                    </span>
+                    <span className="flex items-center space-x-1">
+                      <ThumbsDown className="h-3 w-3" />
+                      <span>{answer.dislikes}</span>
+                    </span>
+                  </div>
+                  <span>{formatDistanceToNow(new Date(answer.created_at), { addSuffix: true })}</span>
                 </div>
               </div>
             ))}
