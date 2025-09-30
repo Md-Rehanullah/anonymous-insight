@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import CreatePostForm from "@/components/CreatePostForm";
 import PostCard from "@/components/PostCard";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface Answer {
   id: string;
@@ -29,20 +30,31 @@ interface Post {
   imageUrl?: string;
 }
 
-
-const Homepage = () => {
+const AllPosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Get user interactions for all posts
   const postIds = posts.map(post => post.id);
   const { interactions } = useUserInteractions(postIds);
 
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredPosts(posts);
+    } else {
+      const filtered = posts.filter(post =>
+        post.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredPosts(filtered);
+    }
+  }, [searchQuery, posts]);
 
   const fetchPosts = async () => {
     try {
@@ -66,7 +78,6 @@ const Homepage = () => {
         return;
       }
 
-      // Transform data to match the expected Post interface
       const transformedPosts: Post[] = data.map((post: any) => ({
         id: post.id,
         title: post.title,
@@ -81,12 +92,13 @@ const Homepage = () => {
           content: answer.content,
           likes: answer.likes,
           dislikes: answer.dislikes,
-          replies: [], // For now, we'll keep replies empty
+          replies: [],
           created_at: answer.created_at
         }))
       }));
 
       setPosts(transformedPosts);
+      setFilteredPosts(transformedPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast({
@@ -97,65 +109,6 @@ const Homepage = () => {
     }
   };
 
-  const handleCreatePost = async (newPostData: {
-    title: string;
-    description: string;
-    category: string;
-    imageUrl?: string;
-  }) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          title: newPostData.title,
-          description: newPostData.description,
-          category: newPostData.category,
-          image_url: newPostData.imageUrl
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating post:', error);
-        toast({
-          title: "Error",
-          description: "Failed to create post. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Add the new post to the local state
-      const newPost: Post = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        likes: data.likes,
-        dislikes: data.dislikes,
-        imageUrl: data.image_url,
-        created_at: data.created_at,
-        answers: []
-      };
-
-      setPosts(prevPosts => [newPost, ...prevPosts]);
-    } catch (error) {
-      console.error('Error creating post:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create post. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Handle like functionality with authentication check
   const handleLike = async (postId: string) => {
     if (!user) {
       toast({
@@ -175,7 +128,6 @@ const Homepage = () => {
 
       if (error) throw error;
 
-      // Refresh posts to show updated counts
       await fetchPosts();
       
       toast({
@@ -192,7 +144,6 @@ const Homepage = () => {
     }
   };
 
-  // Handle dislike functionality with authentication check
   const handleDislike = async (postId: string) => {
     if (!user) {
       toast({
@@ -212,7 +163,6 @@ const Homepage = () => {
 
       if (error) throw error;
 
-      // Refresh posts to show updated counts
       await fetchPosts();
       
       toast({
@@ -265,7 +215,6 @@ const Homepage = () => {
 
       if (error) throw error;
 
-      // Refresh posts to show updated counts
       await fetchPosts();
       
       toast({
@@ -300,7 +249,6 @@ const Homepage = () => {
 
       if (error) throw error;
 
-      // Refresh posts to show updated counts
       await fetchPosts();
       
       toast({
@@ -349,7 +297,6 @@ const Homepage = () => {
         return;
       }
 
-      // Refresh posts to show the new answer
       await fetchPosts();
       
       toast({
@@ -366,110 +313,49 @@ const Homepage = () => {
     }
   };
 
-  // Get categorized posts
-  const latestPosts = [...posts].slice(0, 5);
-  const trendingPosts = [...posts]
-    .sort((a, b) => (b.likes + b.answers.length) - (a.likes + a.answers.length))
-    .slice(0, 5);
-  const mostLikedPosts = [...posts]
-    .sort((a, b) => b.likes - a.likes)
-    .slice(0, 5);
-
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="bg-gradient-hero text-white rounded-2xl p-8 shadow-glow">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Ask Anything, Share Everything
-            </h1>
-            <p className="text-lg opacity-90 max-w-2xl mx-auto">
-              A place where curiosity meets knowledge. Ask questions, share insights, 
-              and connect with others - all completely anonymous.
-            </p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4">All Posts</h1>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search posts by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
 
-        {/* Create Post Form */}
-        <CreatePostForm onCreatePost={handleCreatePost} />
-
-        {posts.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="text-lg">No posts yet. Be the first to ask a question!</p>
-          </div>
-        ) : (
-          <>
-            {/* Latest Posts Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Latest Posts</h2>
-              </div>
-              <div className="space-y-6">
-                {latestPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
-                  />
-                ))}
-              </div>
+        <div className="space-y-6">
+          {filteredPosts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-lg">
+                {searchQuery ? "No posts found matching your search." : "No posts yet."}
+              </p>
             </div>
-
-            {/* Trending Posts Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Trending Posts</h2>
-              </div>
-              <div className="space-y-6">
-                {trendingPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Most Liked Posts Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Most Liked Posts</h2>
-              </div>
-              <div className="space-y-6">
-                {mostLikedPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
-                  />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+          ) : (
+            filteredPosts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handleLike}
+                onDislike={handleDislike}
+                onReport={handleReport}
+                onAddAnswer={handleAddAnswer}
+                onAnswerLike={handleAnswerLike}
+                onAnswerDislike={handleAnswerDislike}
+                userInteraction={interactions[post.id] || null}
+              />
+            ))
+          )}
+        </div>
       </div>
     </Layout>
   );
 };
 
-export default Homepage;
+export default AllPosts;

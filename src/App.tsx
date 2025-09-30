@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import Homepage from "./pages/Homepage";
+import AllPosts from "./pages/AllPosts";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Collaborate from "./pages/Collaborate";
@@ -24,6 +25,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Homepage />} />
+              <Route path="/all-posts" element={<AllPosts />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/collaborate" element={<Collaborate />} />

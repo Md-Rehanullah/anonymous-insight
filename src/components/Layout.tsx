@@ -53,6 +53,15 @@ const Layout = ({ children }: LayoutProps) => {
                 Home
               </Link>
               <Link 
+                to="/all-posts" 
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  location.pathname === "/all-posts" ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                All Posts
+              </Link>
+              <Link 
                 to="/about" 
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary",
@@ -151,6 +160,16 @@ const Layout = ({ children }: LayoutProps) => {
                 )}
               >
                 Home
+              </Link>
+              <Link 
+                to="/all-posts" 
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "block text-sm font-medium py-2 transition-colors hover:text-primary",
+                  location.pathname === "/all-posts" ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                All Posts
               </Link>
               <Link 
                 to="/about" 
