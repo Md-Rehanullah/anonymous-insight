@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Answer {
   id: string;
@@ -400,49 +401,49 @@ const Homepage = () => {
           </div>
         ) : (
           <>
-            {/* Latest Posts Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Latest Posts</h2>
-              </div>
-              <div className="space-y-6">
-                {latestPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Trending Posts Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Trending Posts</h2>
-              </div>
-              <div className="space-y-6">
-                {trendingPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
-                  />
-                ))}
-              </div>
-            </div>
+            {/* Latest and Trending Posts Tabs */}
+            <Tabs defaultValue="latest" className="mb-12">
+              <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+                <TabsTrigger value="latest">Latest Posts</TabsTrigger>
+                <TabsTrigger value="trending">Trending Posts</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="latest">
+                <div className="space-y-6">
+                  {latestPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onLike={handleLike}
+                      onDislike={handleDislike}
+                      onReport={handleReport}
+                      onAddAnswer={handleAddAnswer}
+                      onAnswerLike={handleAnswerLike}
+                      onAnswerDislike={handleAnswerDislike}
+                      userInteraction={interactions[post.id] || null}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="trending">
+                <div className="space-y-6">
+                  {trendingPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onLike={handleLike}
+                      onDislike={handleDislike}
+                      onReport={handleReport}
+                      onAddAnswer={handleAddAnswer}
+                      onAnswerLike={handleAnswerLike}
+                      onAnswerDislike={handleAnswerDislike}
+                      userInteraction={interactions[post.id] || null}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
 
             {/* Most Liked Posts Section */}
             <div className="mb-12">
