@@ -372,8 +372,8 @@ const Homepage = () => {
   const trendingPosts = [...posts]
     .sort((a, b) => (b.likes + b.answers.length) - (a.likes + a.answers.length))
     .slice(0, 5);
-  const mostLikedPosts = [...posts]
-    .sort((a, b) => b.likes - a.likes)
+  const mostAnsweredPosts = [...posts]
+    .sort((a, b) => b.answers.length - a.answers.length)
     .slice(0, 5);
 
   return (
@@ -401,11 +401,12 @@ const Homepage = () => {
           </div>
         ) : (
           <>
-            {/* Latest and Trending Posts Tabs */}
+            {/* Latest, Trending, and Most Answered Posts Tabs */}
             <Tabs defaultValue="latest" className="mb-12">
-              <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+              <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-6">
                 <TabsTrigger value="latest">Latest Posts</TabsTrigger>
                 <TabsTrigger value="trending">Trending Posts</TabsTrigger>
+                <TabsTrigger value="most-answered">Most Answered</TabsTrigger>
               </TabsList>
               
               <TabsContent value="latest">
@@ -443,29 +444,25 @@ const Homepage = () => {
                   ))}
                 </div>
               </TabsContent>
+              
+              <TabsContent value="most-answered">
+                <div className="space-y-6">
+                  {mostAnsweredPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onLike={handleLike}
+                      onDislike={handleDislike}
+                      onReport={handleReport}
+                      onAddAnswer={handleAddAnswer}
+                      onAnswerLike={handleAnswerLike}
+                      onAnswerDislike={handleAnswerDislike}
+                      userInteraction={interactions[post.id] || null}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
             </Tabs>
-
-            {/* Most Liked Posts Section */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Most Liked Posts</h2>
-              </div>
-              <div className="space-y-6">
-                {mostLikedPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
-                  />
-                ))}
-              </div>
-            </div>
           </>
         )}
       </div>
