@@ -38,8 +38,8 @@ const Layout = ({ children }: LayoutProps) => {
       <header className="sticky top-0 z-40 w-full border-b bg-gradient-card backdrop-blur-sm shadow-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Anonymous Q&A
+            <Link to="/" className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+              AtlasTHOUGHT
             </Link>
             
             <nav className="hidden md:flex items-center space-x-6">
@@ -217,7 +217,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="font-semibold text-lg mb-4 bg-gradient-primary bg-clip-text text-transparent">
-                Anonymous Q&A Platform
+                AtlasTHOUGHT
               </h3>
               <p className="text-sm text-muted-foreground">
                 A place where anyone can ask questions, share knowledge, and connect with others anonymously.
