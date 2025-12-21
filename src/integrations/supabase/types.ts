@@ -165,14 +165,12 @@ export type Database = {
         Args: { answer_id: string }
         Returns: undefined
       }
-      increment_post_dislikes: {
-        Args: { post_id: string } | { post_id: string; user_id: string }
-        Returns: undefined
-      }
-      increment_post_likes: {
-        Args: { post_id: string } | { post_id: string; user_id: string }
-        Returns: undefined
-      }
+      increment_post_dislikes:
+        | { Args: { post_id: string }; Returns: undefined }
+        | { Args: { post_id: string; user_id: string }; Returns: undefined }
+      increment_post_likes:
+        | { Args: { post_id: string }; Returns: undefined }
+        | { Args: { post_id: string; user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
