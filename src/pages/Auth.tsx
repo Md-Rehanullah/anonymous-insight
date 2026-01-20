@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { X } from "lucide-react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -131,8 +132,17 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-subtle px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2 rounded-full"
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        <CardHeader className="text-center pt-8">
           <CardTitle className="text-2xl font-bold">Anonymous Insight</CardTitle>
           <CardDescription>Join our community of curious minds</CardDescription>
         </CardHeader>
