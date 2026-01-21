@@ -105,15 +105,18 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="flex items-center space-x-2">
               {user ? (
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
+                  <Link 
+                    to="/profile"
+                    className="flex items-center space-x-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20 hover:bg-primary/20 transition-colors"
+                  >
                     <div className="relative">
                       <User className="h-4 w-4 text-primary" />
                       <CheckCircle className="absolute -top-1 -right-1 h-2.5 w-2.5 text-green-500 fill-current" />
                     </div>
                     <span className="text-sm font-medium text-primary hidden sm:inline">
-                      ✅ Logged In
+                      Profile
                     </span>
-                  </div>
+                  </Link>
                   <Button
                     variant="outline"
                     size="sm"
