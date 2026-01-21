@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import CreatePostForm from "@/components/CreatePostForm";
 import PostCard from "@/components/PostCard";
+import PostCardSkeleton from "@/components/PostCardSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
@@ -33,6 +34,7 @@ interface Post {
 
 const Homepage = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -47,6 +49,7 @@ const Homepage = () => {
 
   const fetchPosts = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -95,6 +98,8 @@ const Homepage = () => {
         description: "Failed to load posts. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -395,7 +400,13 @@ const Homepage = () => {
         {/* Create Post Form */}
         <CreatePostForm onCreatePost={handleCreatePost} />
 
-        {posts.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-6">
+            {[...Array(3)].map((_, i) => (
+              <PostCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-lg">No posts yet. Be the first to ask a question!</p>
           </div>
