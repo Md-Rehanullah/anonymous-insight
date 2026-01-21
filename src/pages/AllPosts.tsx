@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PostCard from "@/components/PostCard";
+import PostCardSkeleton from "@/components/PostCardSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
@@ -34,6 +35,7 @@ const AllPosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -58,6 +60,7 @@ const AllPosts = () => {
 
   const fetchPosts = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -106,6 +109,8 @@ const AllPosts = () => {
         description: "Failed to load posts. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -331,7 +336,11 @@ const AllPosts = () => {
         </div>
 
         <div className="space-y-6">
-          {filteredPosts.length === 0 ? (
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+              <PostCardSkeleton key={i} />
+            ))
+          ) : filteredPosts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <p className="text-lg">
                 {searchQuery ? "No posts found matching your search." : "No posts yet."}
