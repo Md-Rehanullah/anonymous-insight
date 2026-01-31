@@ -5,14 +5,15 @@ import ProfilePostCard from "@/components/ProfilePostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
 import EditPostDialog from "@/components/EditPostDialog";
 import DeletePostDialog from "@/components/DeletePostDialog";
+import ProfileSettings from "@/components/ProfileSettings";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { User, FileText, MessageCircle, ThumbsUp, Calendar } from "lucide-react";
+import { User, FileText, MessageCircle, ThumbsUp, Calendar, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Answer {
@@ -48,9 +49,15 @@ interface UserAnswer {
   };
 }
 
+interface UserProfile {
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 const Profile = () => {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalPosts: 0,
@@ -81,6 +88,16 @@ const Profile = () => {
 
     try {
       setIsLoading(true);
+
+      // Fetch user's profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      setUserProfile(profileData);
 
       // Fetch user's posts
       const { data: postsData, error: postsError } = await supabase
@@ -259,13 +276,16 @@ const Profile = () => {
         <Card className="p-6 mb-8 shadow-card">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <Avatar className="h-20 w-20 border-4 border-primary/20">
+              <AvatarImage src={userProfile?.avatar_url || undefined} alt="Profile avatar" />
               <AvatarFallback className="bg-gradient-primary text-white text-2xl">
                 <User className="h-10 w-10" />
               </AvatarFallback>
             </Avatar>
             
             <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-2xl font-bold mb-2">My Profile</h1>
+              <h1 className="text-2xl font-bold mb-2">
+                {userProfile?.display_name || "My Profile"}
+              </h1>
               <p className="text-muted-foreground mb-4">
                 View and manage your posts and activity
               </p>
@@ -290,9 +310,13 @@ const Profile = () => {
 
         {/* Content Tabs */}
         <Tabs defaultValue="posts" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="posts">My Posts</TabsTrigger>
             <TabsTrigger value="answers">My Answers</TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1">
+              <Settings className="h-4 w-4" />
+              Settings
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="posts">
@@ -359,6 +383,15 @@ const Profile = () => {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <ProfileSettings
+              userId={user.id}
+              displayName={userProfile?.display_name || null}
+              avatarUrl={userProfile?.avatar_url || null}
+              onUpdate={fetchUserData}
+            />
           </TabsContent>
         </Tabs>
 
