@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import PostCard from "@/components/PostCard";
+import ProfilePostCard from "@/components/ProfilePostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
+import EditPostDialog from "@/components/EditPostDialog";
+import DeletePostDialog from "@/components/DeletePostDialog";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserInteractions } from "@/hooks/useUserInteractions";
 import { supabase } from "@/integrations/supabase/client";
 import { User, FileText, MessageCircle, ThumbsUp, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -56,12 +57,12 @@ const Profile = () => {
     totalAnswers: 0,
     totalLikesReceived: 0,
   });
+  const [editPost, setEditPost] = useState<Post | null>(null);
+  const [deletePost, setDeletePost] = useState<Post | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-
-  const postIds = userPosts.map(post => post.id);
-  const { interactions } = useUserInteractions(postIds);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -170,107 +171,66 @@ const Profile = () => {
     }
   };
 
-  const handleLike = async (postId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.rpc('increment_post_likes' as any, {
-        post_id: postId,
-        user_id: user.id
-      });
-
-      if (error) throw error;
-      await fetchUserData();
-    } catch (error) {
-      console.error('Error liking post:', error);
-      toast({
-        title: "Error",
-        description: "Failed to like post.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDislike = async (postId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.rpc('increment_post_dislikes' as any, {
-        post_id: postId,
-        user_id: user.id
-      });
-
-      if (error) throw error;
-      await fetchUserData();
-    } catch (error) {
-      console.error('Error disliking post:', error);
-      toast({
-        title: "Error",
-        description: "Failed to dislike post.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleReport = (postId: string, reason: string) => {
-    toast({
-      title: "Report submitted",
-      description: "Thank you for helping keep our community safe.",
-    });
-  };
-
-  const handleAddAnswer = async (postId: string, answerContent: string) => {
+  const handleEditPost = async (postId: string, data: { title: string; description: string; category: string }) => {
     if (!user) return;
 
     try {
       const { error } = await supabase
-        .from('answers')
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-          content: answerContent
-        });
+        .from('posts')
+        .update({
+          title: data.title,
+          description: data.description,
+          category: data.category,
+        })
+        .eq('id', postId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
-      await fetchUserData();
       
+      await fetchUserData();
       toast({
-        title: "Answer posted!",
-        description: "Your answer has been added successfully.",
+        title: "Post updated",
+        description: "Your post has been updated successfully.",
       });
     } catch (error) {
-      console.error('Error adding answer:', error);
+      console.error('Error updating post:', error);
       toast({
         title: "Error",
-        description: "Failed to add answer.",
+        description: "Failed to update post.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
-  const handleAnswerLike = async (answerId: string) => {
+  const handleDeletePost = async () => {
+    if (!user || !deletePost) return;
+
+    setIsDeleting(true);
     try {
-      const { error } = await supabase.rpc('increment_answer_likes', {
-        answer_id: answerId
-      });
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', deletePost.id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
+      
       await fetchUserData();
-    } catch (error) {
-      console.error('Error liking answer:', error);
-    }
-  };
-
-  const handleAnswerDislike = async (answerId: string) => {
-    try {
-      const { error } = await supabase.rpc('increment_answer_dislikes', {
-        answer_id: answerId
+      setDeletePost(null);
+      toast({
+        title: "Post deleted",
+        description: "Your post has been deleted successfully.",
       });
-
-      if (error) throw error;
-      await fetchUserData();
     } catch (error) {
-      console.error('Error disliking answer:', error);
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete post.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -350,16 +310,11 @@ const Profile = () => {
                 </Card>
               ) : (
                 userPosts.map((post) => (
-                  <PostCard
+                  <ProfilePostCard
                     key={post.id}
                     post={post}
-                    onLike={handleLike}
-                    onDislike={handleDislike}
-                    onReport={handleReport}
-                    onAddAnswer={handleAddAnswer}
-                    onAnswerLike={handleAnswerLike}
-                    onAnswerDislike={handleAnswerDislike}
-                    userInteraction={interactions[post.id] || null}
+                    onEdit={setEditPost}
+                    onDelete={setDeletePost}
                   />
                 ))
               )}
@@ -406,6 +361,23 @@ const Profile = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Post Dialog */}
+        <EditPostDialog
+          post={editPost}
+          open={!!editPost}
+          onOpenChange={(open) => !open && setEditPost(null)}
+          onSave={handleEditPost}
+        />
+
+        {/* Delete Post Dialog */}
+        <DeletePostDialog
+          open={!!deletePost}
+          onOpenChange={(open) => !open && setDeletePost(null)}
+          onConfirm={handleDeletePost}
+          postTitle={deletePost?.title || ""}
+          isDeleting={isDeleting}
+        />
       </div>
     </Layout>
   );
