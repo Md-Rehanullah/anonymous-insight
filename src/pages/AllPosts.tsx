@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PostCard from "@/components/PostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
+import FloatingCreatePostButton from "@/components/FloatingCreatePostButton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
@@ -17,6 +18,8 @@ interface Answer {
   dislikes: number;
   replies: Answer[];
   created_at: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 interface Post {
@@ -29,6 +32,8 @@ interface Post {
   answers: Answer[];
   created_at: string;
   imageUrl?: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 const AllPosts = () => {
@@ -81,6 +86,22 @@ const AllPosts = () => {
         return;
       }
 
+      // Fetch profiles for post and answer authors
+      const postUserIds = data.map((p: any) => p.user_id).filter(Boolean);
+      const answerUserIds = data.flatMap((p: any) => p.answers.map((a: any) => a.user_id)).filter(Boolean);
+      const allUserIds = [...new Set([...postUserIds, ...answerUserIds])];
+
+      let profilesMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+      if (allUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', allUserIds);
+        if (profiles) {
+          profilesMap = Object.fromEntries(profiles.map(p => [p.user_id, p]));
+        }
+      }
+
       const transformedPosts: Post[] = data.map((post: any) => ({
         id: post.id,
         title: post.title,
@@ -90,13 +111,17 @@ const AllPosts = () => {
         dislikes: post.dislikes,
         imageUrl: post.image_url,
         created_at: post.created_at,
+        authorName: profilesMap[post.user_id]?.display_name || null,
+        authorAvatar: profilesMap[post.user_id]?.avatar_url || null,
         answers: post.answers.map((answer: any) => ({
           id: answer.id,
           content: answer.content,
           likes: answer.likes,
           dislikes: answer.dislikes,
           replies: [],
-          created_at: answer.created_at
+          created_at: answer.created_at,
+          authorName: profilesMap[answer.user_id]?.display_name || null,
+          authorAvatar: profilesMap[answer.user_id]?.avatar_url || null,
         }))
       }));
 
@@ -320,6 +345,45 @@ const AllPosts = () => {
     }
   };
 
+  const handleCreatePost = async (newPostData: {
+    title: string;
+    description: string;
+    category: string;
+    imageUrl?: string;
+  }) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          title: newPostData.title,
+          description: newPostData.description,
+          category: newPostData.category,
+          image_url: newPostData.imageUrl
+        });
+
+      if (error) throw error;
+
+      await fetchPosts();
+      toast({
+        title: "Post created!",
+        description: "Your question/content has been posted successfully.",
+      });
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create post. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -365,6 +429,7 @@ const AllPosts = () => {
           )}
         </div>
       </div>
+      <FloatingCreatePostButton onCreatePost={handleCreatePost} />
     </Layout>
   );
 };

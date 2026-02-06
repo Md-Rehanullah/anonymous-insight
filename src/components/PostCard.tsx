@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, ThumbsDown, Share2, Flag, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThumbsUp, ThumbsDown, Share2, Flag, MessageCircle, ChevronDown, ChevronUp, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -14,6 +15,8 @@ interface Answer {
   dislikes: number;
   replies: Answer[];
   created_at: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 interface Post {
@@ -26,6 +29,8 @@ interface Post {
   answers: Answer[];
   created_at: string;
   imageUrl?: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 interface PostCardProps {
@@ -95,14 +100,25 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, onAnswerLike
     <Card className="p-6 shadow-card hover:shadow-elegant transition-all duration-300">
       <div className="space-y-4">
         {/* Post Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="text-lg font-semibold">{post.title}</h3>
-              <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-              </span>
+        <div className="flex items-start gap-3">
+          <Avatar className="h-9 w-9 flex-shrink-0 mt-0.5">
+            <AvatarImage src={post.authorAvatar || undefined} alt={post.authorName || "Anonymous"} />
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <span className="text-sm font-medium text-foreground">
+                  {post.authorName || "Anonymous"}
+                </span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </span>
+              </div>
             </div>
+            <h3 className="text-lg font-semibold">{post.title}</h3>
             <p className="text-muted-foreground mb-3">{post.description}</p>
             <Badge variant="secondary" className="text-xs">
               {post.category}
@@ -227,6 +243,15 @@ const PostCard = ({ post, onLike, onDislike, onReport, onAddAnswer, onAnswerLike
             
             {displayedAnswers.map((answer) => (
               <div key={answer.id} className="p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={answer.authorAvatar || undefined} alt={answer.authorName || "Anonymous"} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                      <User className="h-3 w-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium">{answer.authorName || "Anonymous"}</span>
+                </div>
                 <p className="text-sm mb-2">{answer.content}</p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center space-x-3">
