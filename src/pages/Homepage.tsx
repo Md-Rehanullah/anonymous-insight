@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import CreatePostForm from "@/components/CreatePostForm";
 import PostCard from "@/components/PostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
+import FloatingCreatePostButton from "@/components/FloatingCreatePostButton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserInteractions } from "@/hooks/useUserInteractions";
@@ -17,6 +18,8 @@ interface Answer {
   dislikes: number;
   replies: Answer[];
   created_at: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 interface Post {
@@ -29,6 +32,8 @@ interface Post {
   answers: Answer[];
   created_at: string;
   imageUrl?: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 
@@ -70,7 +75,22 @@ const Homepage = () => {
         return;
       }
 
-      // Transform data to match the expected Post interface
+      // Fetch all relevant user profiles for posts and answers
+      const postUserIds = data.map((p: any) => p.user_id).filter(Boolean);
+      const answerUserIds = data.flatMap((p: any) => p.answers.map((a: any) => a.user_id)).filter(Boolean);
+      const allUserIds = [...new Set([...postUserIds, ...answerUserIds])];
+
+      let profilesMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+      if (allUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', allUserIds);
+        if (profiles) {
+          profilesMap = Object.fromEntries(profiles.map(p => [p.user_id, p]));
+        }
+      }
+
       const transformedPosts: Post[] = data.map((post: any) => ({
         id: post.id,
         title: post.title,
@@ -80,13 +100,17 @@ const Homepage = () => {
         dislikes: post.dislikes,
         imageUrl: post.image_url,
         created_at: post.created_at,
+        authorName: profilesMap[post.user_id]?.display_name || null,
+        authorAvatar: profilesMap[post.user_id]?.avatar_url || null,
         answers: post.answers.map((answer: any) => ({
           id: answer.id,
           content: answer.content,
           likes: answer.likes,
           dislikes: answer.dislikes,
-          replies: [], // For now, we'll keep replies empty
-          created_at: answer.created_at
+          replies: [],
+          created_at: answer.created_at,
+          authorName: profilesMap[answer.user_id]?.display_name || null,
+          authorAvatar: profilesMap[answer.user_id]?.avatar_url || null,
         }))
       }));
 
@@ -479,6 +503,7 @@ const Homepage = () => {
           </>
         )}
       </div>
+      <FloatingCreatePostButton onCreatePost={handleCreatePost} />
     </Layout>
   );
 };
