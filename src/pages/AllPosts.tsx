@@ -215,7 +215,8 @@ const AllPosts = () => {
 
     try {
       const { error } = await supabase.rpc('increment_answer_likes', {
-        answer_id: answerId
+        answer_id: answerId,
+        user_id: user.id
       });
 
       if (error) throw error;
@@ -249,7 +250,8 @@ const AllPosts = () => {
 
     try {
       const { error } = await supabase.rpc('increment_answer_dislikes', {
-        answer_id: answerId
+        answer_id: answerId,
+        user_id: user.id
       });
 
       if (error) throw error;

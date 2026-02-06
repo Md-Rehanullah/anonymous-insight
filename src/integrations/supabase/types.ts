@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      answer_interactions: {
+        Row: {
+          answer_id: string
+          created_at: string | null
+          id: string
+          interaction_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answer_id: string
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answer_id?: string
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_interactions_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       answers: {
         Row: {
           content: string
@@ -158,11 +193,11 @@ export type Database = {
         Returns: string
       }
       increment_answer_dislikes: {
-        Args: { answer_id: string }
+        Args: { answer_id: string; user_id: string }
         Returns: undefined
       }
       increment_answer_likes: {
-        Args: { answer_id: string }
+        Args: { answer_id: string; user_id: string }
         Returns: undefined
       }
       increment_post_dislikes:
