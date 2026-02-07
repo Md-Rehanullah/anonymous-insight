@@ -77,13 +77,14 @@ const ProfileSettings = ({ userId, displayName, avatarUrl, onUpdate }: ProfileSe
       // Add cache-busting query param
       const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
 
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
+      // Update profile with new avatar URL (use upsert to handle missing profile row)
+      const { data: updateData, error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: urlWithCacheBust })
-        .eq('user_id', userId);
+        .upsert({ user_id: userId, avatar_url: urlWithCacheBust }, { onConflict: 'user_id' })
+        .select();
 
       if (updateError) throw updateError;
+      console.log('Avatar update result:', updateData);
 
       setPreviewUrl(urlWithCacheBust);
       onUpdate();
@@ -110,12 +111,24 @@ const ProfileSettings = ({ userId, displayName, avatarUrl, onUpdate }: ProfileSe
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      const { data, error, count } = await supabase
         .from('profiles')
         .update({ display_name: name.trim() })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select();
 
       if (error) throw error;
+
+      console.log('Profile update result:', { data, count, userId });
+
+      if (!data || data.length === 0) {
+        // No row was updated — maybe profile doesn't exist yet, try upsert
+        const { error: upsertError } = await supabase
+          .from('profiles')
+          .upsert({ user_id: userId, display_name: name.trim() }, { onConflict: 'user_id' });
+        
+        if (upsertError) throw upsertError;
+      }
 
       onUpdate();
       toast({
